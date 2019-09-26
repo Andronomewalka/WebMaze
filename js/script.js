@@ -2,5 +2,5 @@
 
 const scale = 35;
 
-const game = new GameController();
+const game = new GameController(10);
 game.run();

@@ -6,8 +6,6 @@ class Movable {
     static map;
     constructor() {
         this.pointBounds = [];
-        this.size = new Point(scale, scale);
-        this.upLeftTilesetPoistion = new Point(0, 0);
         this.speed = 1;
         this.maxSpeed = 8;
         this.angle = 0;
@@ -16,11 +14,9 @@ class Movable {
         this.centerPoint = new Point(0, 0);
         this.prevMoveTime = Date.now();
         this.direction = new Point(0, 0);
-        this.animationDelay = 3;
-        this.animationCurDelay = 3;
     }
 
-    definePosition(fromPoint) {
+    definePosition(fromPoint, offset) {
         let map = Movable.map.field;
         for (let i = fromPoint.y; i < map.length - 35; i += 34) {
             for (let k = fromPoint.x; k < map[0].length - 70; k += 34) {
@@ -30,39 +26,40 @@ class Movable {
                     map[i + 70][k + 35].name == "space" &&
                     map[i + 70][k].name == "space" &&
                     map[i + 35][k].name == "space") {
-                    this.centerPoint.x = k + this.centerOffset.x;
-                    this.centerPoint.y = i + this.centerOffset.y;
+                    this.centerPoint.x = k + offset.x;
+                    this.centerPoint.y = i + offset.y;
                     return;
                 }
             }
         }
     }
 
-    definePointBounds(x, y, angle) {
+    definePointBounds(x, y) {
 
         let res = [];
 
-        let rotationKoefX = this.defineRotationKoefX(angle);
-        let rotationKoefY = this.defineRotationKoefY(angle);
-
-        let leftBound = -2;
-        let rightBound = 3;
-        for (let i = -24; i < 2; i++) {
+        let leftBound = -4;
+        let rightBound = 4;
+        for (let i = -7; i < 8; i++) {
             for (let k = leftBound; k <= rightBound; k++) {
-                if (i == -24 || i == 1) {
-                    res.push(this.defineRotationPoint(x, k, y, i, rotationKoefX, rotationKoefY));
+                if (i == -7 || i == 7) {
+                    res.push(new Point(x + k, y + i));
                 } else
                     break;
             }
-            if (i < -15) {
+
+            if (i != -7 && i != 7) {
+                res.push(new Point(x + leftBound, y + i));
+                res.push(new Point(x + rightBound, y + i));
+            }
+
+            if (i <= -4) {
                 leftBound--;
                 rightBound++;
-            } else if (i > -9) {
+            } else if (i >= 4) {
                 leftBound++;
                 rightBound--;
             }
-            res.push(this.defineRotationPoint(x, leftBound, y, i, rotationKoefX, rotationKoefY));
-            res.push(this.defineRotationPoint(x, rightBound, y, i, rotationKoefX, rotationKoefY));
         }
 
         return res;
@@ -135,24 +132,6 @@ class Movable {
         this.centerPoint.x += this.direction.x * this.speed;
         this.centerPoint.y += this.direction.y * this.speed;
         this.updatePointBoundsInternalState();
-    }
-
-    nextTileAnimation() {
-        if (this.animationCurDelay == 0) {
-            if (this.upLeftTilesetPosition.x == 0)
-                this.upLeftTilesetPosition.x = 35;
-            else if (this.upLeftTilesetPosition.x == 35)
-                this.upLeftTilesetPosition.x = 70;
-            else if (this.upLeftTilesetPosition.x == 70)
-                this.upLeftTilesetPosition.x = 105;
-            else if (this.upLeftTilesetPosition.x == 105)
-                this.upLeftTilesetPosition.x = 140;
-            else if (this.upLeftTilesetPosition.x == 140)
-                this.upLeftTilesetPosition.x = 0;
-
-            this.animationCurDelay = this.animationDelay;
-        }
-        this.animationCurDelay--;
     }
 
     updateAngleInternalState() {

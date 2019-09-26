@@ -1,16 +1,16 @@
 "use strict"
 
-class HpProgressBar {
-    constructor(maxValue, xpos, ypos) {
+class ProgressBar {
+    constructor(maxValue, maxWidth, height, xpos, ypos) {
         this.maxValue = maxValue;
-        this.curWidth = 35;
-        this.maxWidth = 35;
-        this.height = 7;
+        this.curWidth = maxWidth;
+        this.maxWidth = maxWidth;
+        this.height = height;
         this.position = new Point(xpos, ypos);
     }
 
     updateCurLineLength(newValue) {
-        this.curWidth = newValue * this.curWidth / this.maxValue;
+        this.curWidth = newValue * this.maxWidth / this.maxValue;
     }
 
     updatePosition(x, y) {

@@ -10,21 +10,19 @@ class Bot extends Movable {
 
         super();
         this.player = player;
-        this.centerOffset = new Point(18, 60);
-        this.size = new Point(scale, scale * 2);
-        this.upLeftTilesetPosition = new Point(0, 0);
-        this.toPlayerRoute = [];
-        this.moveMap = [];
-        this.playerIsFound = false;
         this.maxSpeed = 8;
-        this.animationDelay = 2;
         this.hitAreaBounds = [];
         this.maxHp = 10;
         this.curHp = this.maxHp;
         this.botMoved = new CustomEvent("botMoved");
-        this.hpBar = new HpProgressBar(this.maxHp, this.centerPoint.x - 20, this.centerPoint.y - 30);
+        this.hpBar = new ProgressBar(this.maxHp, 35, 7, this.centerPoint.x - 20, this.centerPoint.y - 30);
         this.isDead = false;
+
         this.definePosition();
+
+        let centerOffset = new Point(18, 60);
+        this.visual = new Visual(this.centerPoint, centerOffset, new Point(scale, scale * 2), 0, [0, 35, 70, 105, 140]);
+
         this.updateViewTarget();
         this.updatePointBoundsInternalState();
         this.defineHitAreaBounds();
@@ -93,37 +91,6 @@ class Bot extends Movable {
         setTimeout(startWatchPlayerBind, 500);
     }
 
-    definePointBounds(x, y) {
-
-        let res = [];
-
-        let leftBound = -4;
-        let rightBound = 4;
-        for (let i = -7; i < 8; i++) {
-            for (let k = leftBound; k <= rightBound; k++) {
-                if (i == -7 || i == 7) {
-                    res.push(new Point(x + k, y + i));
-                } else
-                    break;
-            }
-
-            if (i != -7 && i != 7) {
-                res.push(new Point(x + leftBound, y + i));
-                res.push(new Point(x + rightBound, y + i));
-            }
-
-            if (i <= -4) {
-                leftBound--;
-                rightBound++;
-            } else if (i >= 4) {
-                leftBound++;
-                rightBound--;
-            }
-        }
-
-        return res;
-    }
-
     defineHitAreaBounds() {
 
         this.hitAreaBounds = [];
@@ -142,6 +109,7 @@ class Bot extends Movable {
         this.viewTarget.y = this.player.centerPoint.y;
         this.updateAngleInternalState();
         this.defineHitAreaBounds();
+        this.visual.updateAngel(this.angle);
     }
 
     defineDirection() {
@@ -153,9 +121,12 @@ class Bot extends Movable {
         if (this.isFreeSpace(this.centerPoint.x + this.direction.x * this.speed, this.centerPoint.y + this.direction.y * this.speed, this.angle)) {
             this.defineMoveSpeed();
             super.move();
-            this.nextTileAnimation();
             this.defineHitAreaBounds();
             this.hpBar.updatePosition(this.centerPoint.x - 20, this.centerPoint.y - 30);
+
+            this.visual.animation.nextMoveTileAnimation(this.direction.x, this.direction.y, this.angle);
+            this.visual.updateCenterPoint(this.centerPoint);
+            this.visual.updateAngel(this.angle);
         }
     }
 
@@ -173,6 +144,6 @@ class Bot extends Movable {
     }
 
     deadAnimation() {
-        this.upLeftTilesetPosition.x = 175;
+        this.visual.upLeftTilesetPosition.x = 175;
     }
 }

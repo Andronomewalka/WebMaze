@@ -13,26 +13,36 @@ class LogicMap {
 
     constructor(height, width) {
 
-        let binaryMap = new BinaryMap(height, width);
-        let bfield = binaryMap.binaryField;
-        let field = [];
-
-        for (let i = 0; i < height * scale; i++) {
-            field[i] = [];
-        }
-
-        let textureMap = [];
         let gates = {
             top: new Point(0, 0),
             right: new Point(0, 0),
             bottom: new Point(0, 0),
             left: new Point(0, 0)
         };
-        let gatesCheck = [];
+        // let gatesCheck = [];
 
-        createTextureMap();
-        addDecorToTexureMap();
-        addGates();
+        let binaryMap;
+        let bfield;
+        let field;
+        let textureMap;
+
+        let mapIsReady = false;
+        while (!mapIsReady) {
+            binaryMap = createBinaryMap();
+            bfield = binaryMap.binaryField;
+            field = [];
+            for (let i = 0; i < height * scale; i++)
+                field[i] = [];
+            textureMap = [];
+
+            createTextureMap();
+            addDecorToTexureMap();
+
+            if (!addGates())
+                continue;
+
+            mapIsReady = true;
+        }
 
         this.binaryField = binaryMap.binaryField;
         this.field = field;
@@ -40,7 +50,11 @@ class LogicMap {
         this.gates = gates;
         this.height = height;
         this.width = width;
-        this.gatesCheck = gatesCheck;
+        // this.gatesCheck = gatesCheck;
+
+        function createBinaryMap() {
+            return new BinaryMap(height, width);
+        }
 
         function createTextureMap() {
 
@@ -259,15 +273,18 @@ class LogicMap {
             let horizontalCenter = field[0].length / 2;
             let verticalCenter = field.length / 2;
 
-            addTopGate(horizontalCenter);
-            addRightGate(verticalCenter);
-            addBottomGate(horizontalCenter);
-            addLeftGate(verticalCenter);
+            if (!addTopGate(horizontalCenter) ||
+                !addRightGate(verticalCenter) ||
+                !addBottomGate(horizontalCenter) ||
+                !addLeftGate(verticalCenter))
+                return false;
+
+            return true;
 
             function addTopGate(horizontalCenter) {
 
-                let isPlaceFound = false;
-                while (!isPlaceFound) {
+                for (let itry = 0; itry < 100; itry++) {
+
                     let horRand = Math.round(random(horizontalCenter - horizontalCenter / 2, horizontalCenter + horizontalCenter / 2));
                     for (let i = 0; i < field.length; i += 35) {
                         if (field[i][horRand].name == "wall" &&
@@ -308,56 +325,21 @@ class LogicMap {
 
                             gates.top = new Point(horRand, i);
 
-                            //#region debug information
-                            //gatesCheck.push(new Point(horRand, i));
-                            //gatesCheck.push(new Point(horRand + 70, i));
-
-                            //gatesCheck.push(new Point(horRand - 15, i + 40));
-                            //gatesCheck.push(new Point(horRand, i + 40));
-                            //gatesCheck.push(new Point(horRand + 15, i + 40));
-                            //gatesCheck.push(new Point(horRand + 30, i + 40));
-                            //gatesCheck.push(new Point(horRand + 45, i + 40));
-                            //gatesCheck.push(new Point(horRand + 60, i + 40));
-                            //gatesCheck.push(new Point(horRand + 75, i + 40));
-
-                            //gatesCheck.push(new Point(horRand - 15, i + 55));
-                            //gatesCheck.push(new Point(horRand, i + 55));
-                            //gatesCheck.push(new Point(horRand + 15, i + 55));
-                            //gatesCheck.push(new Point(horRand + 30, i + 55));
-                            //gatesCheck.push(new Point(horRand + 45, i + 55));
-                            //gatesCheck.push(new Point(horRand + 60, i + 55));
-                            //gatesCheck.push(new Point(horRand + 75, i + 55));
-
-                            //gatesCheck.push(new Point(horRand - 15, i + 70));
-                            //gatesCheck.push(new Point(horRand, i + 70));
-                            //gatesCheck.push(new Point(horRand + 15, i + 70));
-                            //gatesCheck.push(new Point(horRand + 30, i + 70));
-                            //gatesCheck.push(new Point(horRand + 45, i + 70));
-                            //gatesCheck.push(new Point(horRand + 60, i + 70));
-                            //gatesCheck.push(new Point(horRand + 75, i + 70));
-
-                            //gatesCheck.push(new Point(horRand - 15, i + 85));
-                            //gatesCheck.push(new Point(horRand, i + 85));
-                            //gatesCheck.push(new Point(horRand + 15, i + 85));
-                            //gatesCheck.push(new Point(horRand + 30, i + 85));
-                            //gatesCheck.push(new Point(horRand + 45, i + 85));
-                            //gatesCheck.push(new Point(horRand + 60, i + 85));
-                            //gatesCheck.push(new Point(horRand + 75, i + 85));
-                            //#endregion
-
                             fillField(horRand, i, horRand + 70, i + 35, LogicMap.gate);
-                            isPlaceFound = true;
+                            return true;
+
                         } else if (field[i][horRand].name == "space") {
                             break;
                         }
                     }
                 }
+                return false;
             }
 
             function addRightGate(verticalCenter) {
 
-                let isPlaceFound = false;
-                while (!isPlaceFound) {
+                for (let itry = 0; itry < 100; itry++) {
+
                     let vertRand = Math.round(random(verticalCenter - verticalCenter / 2, verticalCenter + verticalCenter / 2));
                     for (let i = field[0].length - 1; i > 0; i -= 35) {
                         if (field[vertRand][i].name == "wall" &&
@@ -390,49 +372,21 @@ class LogicMap {
 
                             gates.right = new Point(i, vertRand);
 
-                            //#region debug information
-                            //gatesCheck.push(new Point(i, vertRand));
-                            //gatesCheck.push(new Point(i, vertRand + 35));
-                            //gatesCheck.push(new Point(i, vertRand + 70));
-
-                            //gatesCheck.push(new Point(i - 45, vertRand - 15));
-                            //gatesCheck.push(new Point(i - 45, vertRand));
-                            //gatesCheck.push(new Point(i - 45, vertRand + 15));
-                            //gatesCheck.push(new Point(i - 45, vertRand + 30));
-                            //gatesCheck.push(new Point(i - 45, vertRand + 45));
-                            //gatesCheck.push(new Point(i - 45, vertRand + 60));
-                            //gatesCheck.push(new Point(i - 45, vertRand + 75));
-
-                            //gatesCheck.push(new Point(i - 60, vertRand - 15));
-                            //gatesCheck.push(new Point(i - 60, vertRand));
-                            //gatesCheck.push(new Point(i - 60, vertRand + 15));
-                            //gatesCheck.push(new Point(i - 60, vertRand + 30));
-                            //gatesCheck.push(new Point(i - 60, vertRand + 45));
-                            //gatesCheck.push(new Point(i - 60, vertRand + 60));
-                            //gatesCheck.push(new Point(i - 60, vertRand + 75));
-
-                            //gatesCheck.push(new Point(i - 75, vertRand - 15));
-                            //gatesCheck.push(new Point(i - 75, vertRand));
-                            //gatesCheck.push(new Point(i - 75, vertRand + 15));
-                            //gatesCheck.push(new Point(i - 75, vertRand + 30));
-                            //gatesCheck.push(new Point(i - 75, vertRand + 45));
-                            //gatesCheck.push(new Point(i - 75, vertRand + 60));
-                            //gatesCheck.push(new Point(i - 75, vertRand + 75));
-                            //endregion 
-
                             fillField(i - 35, vertRand, i, vertRand + 70, LogicMap.gate);
-                            isPlaceFound = true;
+                            return true;
+
                         } else if (field[vertRand][i].name == "space") {
                             break;
                         }
                     }
                 }
+                return false;
             }
 
             function addBottomGate(horizontalCenter) {
 
-                let isPlaceFound = false;
-                while (!isPlaceFound) {
+                for (let itry = 0; itry < 100; itry++) {
+
                     let horRand = Math.round(random(horizontalCenter - horizontalCenter / 2, horizontalCenter + horizontalCenter / 2));
                     for (let i = field.length - 1; i > 0; i -= 35) {
                         if (field[i][horRand].name == "wall" &&
@@ -473,57 +427,21 @@ class LogicMap {
 
                             gates.bottom = new Point(horRand, i);
 
-                            //#region debug information
-                            //gatesCheck.push(new Point(horRand, i));
-                            //gatesCheck.push(new Point(horRand + 70, i));
-
-                            //gatesCheck.push(new Point(horRand - 15, i - 40));
-                            //gatesCheck.push(new Point(horRand, i - 40));
-                            //gatesCheck.push(new Point(horRand + 15, i - 40));
-                            //gatesCheck.push(new Point(horRand + 30, i - 40));
-                            //gatesCheck.push(new Point(horRand + 45, i - 40));
-                            //gatesCheck.push(new Point(horRand + 60, i - 40));
-                            //gatesCheck.push(new Point(horRand + 75, i - 40));
-
-                            //gatesCheck.push(new Point(horRand - 15, i - 55));
-                            //gatesCheck.push(new Point(horRand, i - 55));
-                            //gatesCheck.push(new Point(horRand + 15, i - 55));
-                            //gatesCheck.push(new Point(horRand + 30, i - 55));
-                            //gatesCheck.push(new Point(horRand + 45, i - 55));
-                            //gatesCheck.push(new Point(horRand + 60, i - 55));
-                            //gatesCheck.push(new Point(horRand + 75, i - 55));
-
-                            //gatesCheck.push(new Point(horRand - 15, i - 70));
-                            //gatesCheck.push(new Point(horRand, i - 70));
-                            //gatesCheck.push(new Point(horRand + 15, i - 70));
-                            //gatesCheck.push(new Point(horRand + 30, i - 70));
-                            //gatesCheck.push(new Point(horRand + 45, i - 70));
-                            //gatesCheck.push(new Point(horRand + 60, i - 70));
-                            //gatesCheck.push(new Point(horRand + 75, i - 70));
-
-                            //gatesCheck.push(new Point(horRand - 15, i - 85));
-                            //gatesCheck.push(new Point(horRand, i - 85));
-                            //gatesCheck.push(new Point(horRand + 15, i - 85));
-                            //gatesCheck.push(new Point(horRand + 30, i - 85));
-                            //gatesCheck.push(new Point(horRand + 45, i - 85));
-                            //gatesCheck.push(new Point(horRand + 60, i - 85));
-                            //gatesCheck.push(new Point(horRand + 75, i - 85));
-                            //#endregion
-
                             fillField(horRand, i - 35, horRand + 70, i, LogicMap.gate);
-                            isPlaceFound = true;
+                            return true;
 
                         } else if (field[i][horRand].name == "space") {
                             break;
                         }
                     }
                 }
+                return false;
             }
 
             function addLeftGate(verticalCenter) {
 
-                let isPlaceFound = false;
-                while (!isPlaceFound) {
+                for (let itry = 0; itry < 100; itry++) {
+
                     let vertRand = Math.round(random(verticalCenter - verticalCenter / 2, verticalCenter + verticalCenter / 2));
                     for (let i = 0; i < field[0].length; i += 35) {
                         if (field[vertRand][i].name == "wall" &&
@@ -556,44 +474,15 @@ class LogicMap {
 
                             gates.left = new Point(i, vertRand);
 
-                            //#region debug information
-                            //gatesCheck.push(new Point(i, vertRand));
-                            //gatesCheck.push(new Point(i, vertRand + 35));
-                            //gatesCheck.push(new Point(i, vertRand + 70));
-
-                            //gatesCheck.push(new Point(i + 45, vertRand - 15));
-                            //gatesCheck.push(new Point(i + 45, vertRand));
-                            //gatesCheck.push(new Point(i + 45, vertRand + 15));
-                            //gatesCheck.push(new Point(i + 45, vertRand + 30));
-                            //gatesCheck.push(new Point(i + 45, vertRand + 45));
-                            //gatesCheck.push(new Point(i + 45, vertRand + 60));
-                            //gatesCheck.push(new Point(i + 45, vertRand + 75));
-
-                            //gatesCheck.push(new Point(i + 60, vertRand - 15));
-                            //gatesCheck.push(new Point(i + 60, vertRand));
-                            //gatesCheck.push(new Point(i + 60, vertRand + 15));
-                            //gatesCheck.push(new Point(i + 60, vertRand + 30));
-                            //gatesCheck.push(new Point(i + 60, vertRand + 45));
-                            //gatesCheck.push(new Point(i + 60, vertRand + 60));
-                            //gatesCheck.push(new Point(i + 60, vertRand + 75));
-
-                            //gatesCheck.push(new Point(i + 75, vertRand - 15));
-                            //gatesCheck.push(new Point(i + 75, vertRand));
-                            //gatesCheck.push(new Point(i + 75, vertRand + 15));
-                            //gatesCheck.push(new Point(i + 75, vertRand + 30));
-                            //gatesCheck.push(new Point(i + 75, vertRand + 45));
-                            //gatesCheck.push(new Point(i + 75, vertRand + 60));
-                            //gatesCheck.push(new Point(i + 75, vertRand + 75));
-                            //endregion 
-
                             fillField(i, vertRand, i + 35, vertRand + 70, LogicMap.gate);
-                            isPlaceFound = true;
+                            return true;
 
                         } else if (field[vertRand][i].name == "space") {
                             break;
                         }
                     }
                 }
+                return false;
             }
         }
     }

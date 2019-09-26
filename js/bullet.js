@@ -3,33 +3,46 @@
 
 class Bullet extends Movable {
 
-    constructor(position, angle, index) {
+    constructor(position, angle, aliveBots, eraseBulletCallback) {
 
         super();
 
         this.angle = angle;
-        this.upLeftTilesetPosition = new Point(0, 0);
-        this.centerOffset = new Point(16, 29);
         this.speed = 15;
         this.direction = new Point(0, 0);
         this.isCollission = false;
-        this.bulletInitIndex = index;
+        this.eraseBulletCallback = eraseBulletCallback;
+        this.aliveBots = aliveBots;
 
-        definePosition.call(this);
-        defineDirection.call(this);
+        this.definePosition(position);
+        this.defineDirection(angle);
+
+        let centerOffset = new Point(16, 29);
+        this.visualBullet = new Visual(this.centerPoint, centerOffset, new Point(scale, scale), this.angle, [0, 35, 70, 105, 140]);
+        this.visualExpl = new Visual(position, centerOffset, new Point(scale, scale), this.angle, [35, 35]);
+
+        this.inExplosiveAnimation = false;
+        this.startExplAnimation();
 
         let moveBind = this.move.bind(this);
         this.moveTimer = setInterval(moveBind, 20);
 
-        function definePosition() {
-            this.centerPoint.x = position.x;
-            this.centerPoint.y = position.y;
-        }
+        this.botCollisionIndex = { value: -1 };
+        this.rawCollision = new CustomEvent("rawCollision", {
+            detail: {
+                botIndex: this.botCollisionIndex
+            }
+        });
+    }
 
-        function defineDirection() {
-            this.direction.y = -Math.cos(angle);
-            this.direction.x = Math.sin(angle);
-        }
+    definePosition(position) {
+        this.centerPoint.x = position.x;
+        this.centerPoint.y = position.y;
+    }
+
+    defineDirection(angle) {
+        this.direction.y = -Math.cos(angle);
+        this.direction.x = Math.sin(angle);
     }
 
     definePointBounds(x, y, angle) {
@@ -67,27 +80,15 @@ class Bullet extends Movable {
         this.startAnimationHit();
     }
 
-    startAnimationHit() {
-        let animationBind = this.hitAnimation.bind(this);
-        this.animationTimer = setInterval(animationBind, 20);
+    startExplAnimation() {
+        this.inExplosiveAnimation = true;
+        this.visualExpl.animation.runAnimationInterval(() => this.inExplosiveAnimation = false, 50);
     }
 
-    hitAnimation() {
-        if (this.upLeftTilesetPosition.x == 0)
-            this.upLeftTilesetPosition.x = 35;
-        else if (this.upLeftTilesetPosition.x == 35)
-            this.upLeftTilesetPosition.x = 70;
-        else if (this.upLeftTilesetPosition.x == 70)
-            this.upLeftTilesetPosition.x = 105;
-        else if (this.upLeftTilesetPosition.x == 105)
-            this.upLeftTilesetPosition.x = 140;
-        else {
-            clearInterval(this.animationTimer);
-            let actualBulletIndex = this.bulletInitIndex;
-            if (this.bulletInitIndex != GameController.bulletsOnMap)
-                actualBulletIndex = this.bulletInitIndex - GameController.bulletsOnMap
-            GameController.bulletsOnMap.splice(actualBulletIndex, 1);
-        }
+    startAnimationHit() {
+
+        let eraseBulletBind = this.eraseBulletCallback.bind(this);
+        this.visualBullet.animation.runAnimationInterval(eraseBulletBind, 20, this);
     }
 
     isFreeSpace(newX, newY, newAngle) {
@@ -103,7 +104,7 @@ class Bullet extends Movable {
         return true;
     }
     isBotCollision() {
-        let botCollisionIndex = GameController.aliveBots.findIndex(bot => {
+        let botCollisionIndex = this.aliveBots.findIndex(bot => {
             let xs = bot.hitAreaBounds.map(item => item.x);
             let ys = bot.hitAreaBounds.map(item => item.y);
             let minX = Math.min.apply(null, xs);
@@ -116,17 +117,8 @@ class Bullet extends Movable {
             }
         });
         if (botCollisionIndex != -1) {
-            let newHp = GameController.aliveBots[botCollisionIndex].curHp - 4;
-            if (newHp <= 0) {
-                let newDeadBot = GameController.aliveBots[botCollisionIndex];
-                GameController.deadBots.push(newDeadBot);
-                newDeadBot.dead();
-                GameController.aliveBots.splice(botCollisionIndex, 1);
-            } else {
-                GameController.aliveBots[botCollisionIndex].curHp = newHp;
-                GameController.aliveBots[botCollisionIndex].hpBar.updateCurLineLength(newHp);
-                GameController.aliveBots[botCollisionIndex].speed = 0;
-            }
+            this.botCollisionIndex.value = botCollisionIndex;
+            gameMap.dispatchEvent(this.rawCollision);
             return true;
         }
 

@@ -3,11 +3,7 @@
 
 class GameController {
 
-    static aliveBots = [];
-    static deadBots = [];
-    static bulletsOnMap = [];
-
-    constructor() {
+    constructor(botsOnMap) {
         let height = 22;
         let width = 40;
 
@@ -16,9 +12,21 @@ class GameController {
 
         this.player = new Player();
 
+        this.aliveBots = [];
+        this.deadBots = [];
+        this.bulletsOnMap = [];
+
+        botsOnMap = 10;
+        this.textManager = new TextManager();
+        this.statistics = new Statistics(botsOnMap);
+
+        this.collisionManager = new CollisionManager(this.player, this.aliveBots);
+
         this.timeSpawn = 3000;
 
         this.render = new Render(this);
+
+        gameMap.addEventListener("processedCollision", report => this.collisionCallBack(report));
 
         //document.body.addEventListener("click", () =>
         //    alert("mouse x: " + event.clientX + "\n" +
@@ -37,8 +45,6 @@ class GameController {
 
         this.spawnBind = this.newBot.bind(this, this.player);
         this.spawnTimer = setInterval(this.spawnBind, this.timeSpawn);
-
-        //this.newBot(this.player);
     }
 
     inputBindings() {
@@ -56,6 +62,9 @@ class GameController {
         let playerMoveLeft = this.player.moveLeft.bind(this.player);
         input.watch("left", playerMoveLeft, "a");
 
+        let playerReload = this.player.startReload.bind(this.player);
+        input.watch("reload", playerReload, "r");
+
         let playerMoveDiagonal = this.player.moveDiagonal.bind(this.player);
         input.watch("up left", playerMoveDiagonal, "w", "a");
         input.watch("up right", playerMoveDiagonal, "w", "d");
@@ -63,7 +72,7 @@ class GameController {
         input.watch("down right", playerMoveDiagonal, "s", "d");
 
         let newBulletBind = this.newBullet.bind(this);
-        gameMap.addEventListener("click", newBulletBind);
+        gameMap.addEventListener("mousedown", newBulletBind);
     }
 
     defineTimeSpawn() {
@@ -77,12 +86,35 @@ class GameController {
     }
 
     newBot(player) {
-        if (GameController.aliveBots.length < 5)
-            GameController.aliveBots.push(new Bot(player));
+        if (this.aliveBots.length < 5 && !this.statistics.isGameEnd() &&
+            !this.statistics.isLastBots(this.aliveBots.length)) {
+            this.aliveBots.push(new Bot(player));
+        }
     }
 
     newBullet() {
-        let bulletPosition = new Point(this.player.gunPoint.x, this.player.gunPoint.y);
-        GameController.bulletsOnMap.push(new Bullet(bulletPosition, this.player.angle, GameController.bulletsOnMap.length));
+        if (this.player.shoot()) {
+            let eraseBulletBind = this.eraseBullet.bind(this);
+            this.bulletsOnMap.push(new Bullet(this.player.gunPoint, this.player.angle,
+                this.aliveBots, eraseBulletBind));
+        }
+    }
+
+    eraseBullet(bullet) {
+        let actualBulletIndex = this.bulletsOnMap.indexOf(bullet);
+        this.bulletsOnMap.splice(actualBulletIndex, 1);
+    }
+
+    collisionCallBack(e) {
+        let report = e.detail.report;
+        if (report.objectIsDead) {
+
+            this.deadBots.push(report.object);
+            report.object.dead();
+
+            let curBotId = this.aliveBots.indexOf(report.object);
+            this.aliveBots.splice(curBotId, 1);
+            this.statistics.botsLeft--;
+        }
     }
 }
